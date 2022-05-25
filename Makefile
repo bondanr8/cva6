@@ -450,18 +450,20 @@ XRUN_COMPL_LOG     ?= xrun_compl.log
 XRUN_RUN_LOG       ?= xrun_run.log
 CVA6_HOME	   ?= $(realpath -s $(root-dir))
 
-XRUN_INCDIR :=+incdir+$(CVA6_HOME)/src/axi_node 	\
-	+incdir+$(CVA6_HOME)/src/common_cells/include 	\
-	+incdir+$(CVA6_HOME)/src/util
+XRUN_INCDIR :=  +incdir+$(CVA6_HOME)/corev_apu/register_interface/include/ \
+          	+incdir+$(CVA6_HOME)/common/local/util \
+        	+incdir+$(CVA6_HOME)/core/fpu/src/common_cells/include \
+        	+incdir+$(CVA6_HOME)/corev_apu/axi/include
+
 XRUN_TB := $(addprefix $(CVA6_HOME)/, corev_apu/tb/ariane_tb.sv)
 
-XRUN_COMP_FLAGS  ?= -64bit -disable_sem2009 -access +rwc 			\
+XRUN_COMP_FLAGS  ?= -clean -64bit -disable_sem2009 -access +rwc 			\
 		    -sv -v93 -uvm -uvmhome $(XRUN_UVMHOME_ARG) 			\
 		    -sv_lib $(CVA6_HOME)/$(dpi-library)/ariane_dpi.so		\
 		    -smartorder -sv -top worklib.$(top_level)			\
 		    -xceligen on=1903 +define+$(defines) -timescale 1ns/1ps	\
 
-XRUN_RUN_FLAGS := -R -64bit -disable_sem2009 -access +rwc -timescale 1ns/1ps		\
+XRUN_RUN_FLAGS := -R -64bit -disable_sem2009 -access +rwc -timescale 1ns/1ps 	\
 		-sv_lib	$(CVA6_HOME)/$(dpi-library)/ariane_dpi.so -xceligen on=1903	\
 
 XRUN_DISABLED_WARNINGS := BIGWIX 	\
@@ -507,9 +509,11 @@ xrun_sim: xrun_comp
 		$(XRUN_RUN)			\
 		+MAX_CYCLES=$(max_cycles)	\
 		+UVM_TESTNAME=$(test_case)	\
+		+PRELOAD=$(CVA6_HOME)/$(elf-bin) \
+		+disable_debug \
 		-l $(XRUN_RUN_LOG)		\
 		+permissive-off			\
-		++$(elf-bin)
+		++$(CVA6_HOME)/$(elf-bin)
 
 #-e "set_severity_pack_assert_off {warning}; set_pack_assert_off {numeric_std}" TODO: This will remove assertion warning at the beginning of the simulation.
 
@@ -518,8 +522,8 @@ xrun_all: xrun_clean xrun_comp xrun_sim
 $(addprefix xrun_, $(riscv-asm-tests)): xrun_comp
 	cd $(XRUN_RESULTS_DIR); 								\
 	mkdir -p isa/asm/;									\
-	$(XRUN)	+permissive $(XRUN_RUN) +MAX_CYCLES=$(max_cycles) +UVM_TESTNAME=$(test_case) 	\
-	-l isa/asm/$(notdir $@).log +permissive-off ++$(CVA6_HOME)/$(riscv-test-dir)/$(patsubst xrun_%,%,$@)
+	$(XRUN)	+permissive $(XRUN_RUN) +MAX_CYCLES=$(max_cycles) +UVM_TESTNAME=$(test_case) +disable_debug \
+	-l isa/asm/$(notdir $@).log +PRELOAD=$(CVA6_HOME)/$(riscv-test-dir)/$(patsubst xrun_%,%,$@) +permissive-off ++$(CVA6_HOME)/$(riscv-test-dir)/$(patsubst xrun_%,%,$@)
 
 $(addprefix xrun_, $(riscv-amo-tests)): xrun_comp
 	cd $(XRUN_RESULTS_DIR); 								\

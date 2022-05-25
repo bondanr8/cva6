@@ -139,7 +139,8 @@ module ariane_tb;
                 `uvm_info( "Core Test", $sformatf("Loading Address: %x, Length: %x", address, len),
 UVM_LOW)
                 buffer = new [num_words*8];
-                void'(read_section(address, buffer));
+                //void'(read_section(address, buffer));
+                read_section(address, buffer);
                 // preload memories
                 // 64-bit
                 for (int i = 0; i < num_words; i++) begin
